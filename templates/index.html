@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Goutudeboom</title>
+    
+    <link rel="icon" type="image/png" href="/static/image_12.png">
+    <style>
+        body {
+            background-color: #090a0f;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+
+            /* --- FONDO PRO DE LOL (Temática Cyan) --- */
+            background-image: 
+                radial-gradient(ellipse at top center, rgba(0, 255, 255, 0.15) 0%, transparent 60%),
+                linear-gradient(to bottom, rgba(10, 12, 18, 0.85) 0%, rgba(5, 6, 10, 0.95) 100%),
+                url('https://images.contentstack.io/v3/assets/blt731acb42bb3d1659/blt80930b4019101c01/62e034e0632660645b529893/Runeterra_Map_Background.jpg');
+
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+
+        /* --- BANNER PRINCIPAL FULL WIDTH --- */
+        .banner-wrapper {
+            width: calc(100% + 40px); 
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-top: -20px; 
+            margin-bottom: 40px; 
+            box-shadow: 0 10px 50px rgba(0, 255, 255, 0.1);
+            border-bottom: 2px solid rgba(0, 255, 255, 0.5);
+            line-height: 0; 
+        }
+
+        .main-banner-img {
+            width: 100%;     
+            height: auto;     
+            display: block;   
+            object-fit: cover; 
+        }
+
+        /* --- ESTILOS DE LAS PESTAÑAS (TABS) --- */
+        .tabs-menu {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 1.2em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            padding: 10px 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover { color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+        .tab-btn.active { color: #00ffff; text-shadow: 0 0 15px rgba(0, 255, 255, 0.6); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        /* Ocultar secciones */
+        .tab-content { display: none; width: 100%; justify-content: center; animation: fadeIn 0.5s ease; }
+        .tab-content.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .container {
+            width: 95%; 
+            max-width: 1500px;
+            margin: 0 auto; 
+            background-color: rgba(30, 30, 30, 0.95);
+            border-radius: 16px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 100px rgba(0, 255, 255, 0.1); 
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 2;
+            overflow: hidden; 
+        }
+
+        /* --- ESTILOS DE LA TABLA --- */
+        table { width: 100%; border-collapse: collapse; }
+        
+        th, td { 
+            padding: 10px 15px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            vertical-align: middle;
+            height: 160px; 
+            position: relative;
+        }
+
+        /* --- NUEVO: FONDO PARA EL ENCABEZADO DE LA TABLA --- */
+        #leaderboardTable thead tr {
+            background-image: url('/static/image_21.png'); /* Imagen de fondo */
+            background-size: cover;
+            background-position: center;
+        }
+        /* -------------------------------------------------- */
+
+        th { 
+            /* background-color: rgba(37, 37, 37, 0.9);  <-- ELIMINADO */
+            background-color: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente para que se vea la imagen */
+            color: #fff; /* Texto blanco para mejor contraste */
+            text-shadow: 0 2px 4px rgba(0,0,0,1); /* Sombra para que el texto resalte */
+            font-size: 1.1em; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            text-align: center;
+            z-index: 10;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3); /* Borde inferior más visible */
+        }
+
+        tr { 
+            background-color: rgba(30, 30, 30, 0.4); 
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1; 
+        }
+        
+        tr:hover { 
+            background-color: rgba(45, 45, 45, 0.8); 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 5; 
+            position: relative;
+        }
+
+        /* --- ESTILOS ESPECIALES PARA LOS BANNERS (TOP 1-5) --- */
+        .rank-1-banner { background-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%), url('/static/sylas.webp') !important; background-size: cover !important; background-position: center 20% !important; background-repeat: no-repeat !important; border: 2px solid #ffce44 !important; box-shadow: 0 0 30px rgba(255, 206, 68, 0.2) !important; } .rank-1-banner td { border-bottom: none; text-shadow: 0 2px 10px rgba(0,0,0,1) !important; }
+        .rank-2-banner { background-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%), url('/static/ahri.webp') !important; background-size: cover !important; background-position: center 30% !important; background-repeat: no-repeat !important; border: 2px solid #8a2be2 !important; box-shadow: 0 0 30px rgba(138, 43, 226, 0.3) !important; } .rank-2-banner td { border-bottom: none; text-shadow: 0 2px 10px rgba(0,0,0,1) !important; }
+        .rank-3-banner { background-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%), url('/static/mf.webp') !important; background-size: cover !important; background-position: center 25% !important; background-repeat: no-repeat !important; border: 2px solid #ff4500 !important; box-shadow: 0 0 30px rgba(255, 69, 0, 0.3) !important; } .rank-3-banner td { border-bottom: none; text-shadow: 0 2px 10px rgba(0,0,0,1) !important; }
+        .rank-4-banner { background-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%), url('/static/ahri_coven.webp') !important; background-size: cover !important; background-position: center 30% !important; background-repeat: no-repeat !important; border: 2px solid #e91e63 !important; box-shadow: 0 0 30px rgba(233, 30, 99, 0.4) !important; } .rank-4-banner td { border-bottom: none; text-shadow: 0 2px 10px rgba(0,0,0,1) !important; }
+        .rank-5-banner { background-image: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%), url('/static/anime_girl.webp') !important; background-size: cover !important; background-position: center 20% !important; background-repeat: no-repeat !important; border: 2px solid #ff69b4 !important; box-shadow: 0 0 30px rgba(255, 105, 180, 0.4) !important; } .rank-5-banner td { border-bottom: none; text-shadow: 0 2px 10px rgba(0,0,0,1) !important; }
+        /* ----------------------------------------------------------- */
+
+
+        /* Columnas Desktop */
+        .col-invocador { text-align: left; padding-left: 40px; width: 300px; z-index: 2; position: relative; }
+        .player-info { display: flex; align-items: center; gap: 20px; }
+        .player-icon { width: 55px; height: 55px; border-radius: 50%; border: 3px solid #00ffff; object-fit: cover; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); background-color: #000; }
+        .player-name-box { display: flex; flex-direction: column; }
+        .player-name { color: white; font-weight: bold; font-size: 1.3em; text-shadow: 0 2px 5px rgba(0,0,0,0.8);}
+        .tag-line { color: #888; font-size: 0.9em; font-weight: normal;}
+
+        .col-rank-icon { width: 120px; padding: 0; overflow: visible; text-align: center; }
+        .rank-img { width: 380px; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: contain; opacity: 0.35; filter: drop-shadow(0 0 15px rgba(0,0,0,1)); pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 0; }
+        tr:hover .rank-img { opacity: 1; transform: translate(-50%, -50%) scale(1.08); filter: drop-shadow(0 0 35px rgba(0, 255, 255, 0.4)); z-index: 0; }
+
+        .col-rank-text { text-align: left; width: 180px; padding-left: 50px; position: relative; z-index: 2; }
+        .rank-text-group { display: flex; flex-direction: column; align-items: flex-start; text-shadow: 0 3px 8px rgba(0,0,0,1); }
+        .tier-label { font-size: 1.8em; font-weight: 900; text-transform: uppercase; line-height: 1; }
+        
+        /* COLORES RANGOS */
+        .tier-challenger { color: #f4c430; text-shadow: 0 0 20px rgba(244, 196, 48, 0.6); }
+        .tier-grandmaster { color: #ff5858; text-shadow: 0 0 15px rgba(255, 88, 88, 0.4); }
+        .tier-master { color: #d0a6ff; text-shadow: 0 0 15px rgba(208, 166, 255, 0.4); }
+        .tier-diamond { color: #576bce; text-shadow: 0 0 15px rgba(87, 107, 206, 0.4); }
+        .tier-emerald { color: #2ecc71; text-shadow: 0 0 15px rgba(46, 204, 113, 0.4); }
+        .tier-platinum { color: #25c8c6; text-shadow: 0 0 10px rgba(37, 200, 198, 0.4); }
+        .tier-gold { color: #f1a532; text-shadow: 0 0 10px rgba(241, 165, 50, 0.4); }
+        .tier-silver { color: #aeb5bd; text-shadow: 0 0 10px rgba(174, 181, 189, 0.4); }
+        .tier-bronze { color: #8c513a; text-shadow: 0 0 10px rgba(140, 81, 58, 0.4); }
+        .tier-iron { color: #51484a; text-shadow: 0 0 10px rgba(81, 72, 74, 0.4); }
+
+        .division-label { font-size: 1.2em; color: #ccc; font-weight: 500; margin-top: 5px; }
+        .col-centered { text-align: center; position: relative; z-index: 2; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .lp-count { color: #fff; font-weight: bold; font-size: 1.2em;}
+        
+        /* ESTILOS DEL ENLACE DE WINRATE */
+        .winrate-link {
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .winrate-link:hover {
+            opacity: 0.8;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .winrate { font-size: 1.1em; font-weight: bold;}
+        .winrate.high { color: #2ecc71; }
+        .winrate.low { color: #e84118; }
+        .loading { text-align: center; padding: 50px; color: #888; font-style: italic; font-size: 1.2em;}
+        
+        .chala-placeholder { padding: 80px 20px; text-align: center; font-size: 1.5em; color: #666; }
+        .chala-title { color: #00ffff; margin-bottom: 20px; text-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+        .chala-img { margin-top: 20px; max-width: 300px; width: 100%; border-radius: 15px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); border: 2px solid rgba(0, 255, 255, 0.3); transition: transform 0.3s; }
+        .chala-img:hover { transform: scale(1.05); }
+
+        /* --- TITULO SPONSORS --- */
+        .sponsors-title { text-align: center; color: #00ffff; font-size: 1.5em; letter-spacing: 4px; margin-top: 60px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); text-transform: uppercase; font-weight: 700; z-index: 10; }
+
+        /* --- ESTILOS DE LOS LOGOS FOOTER --- */
+        .footer-container { display: flex; gap: 40px; margin-top: 20px; margin-bottom: 40px; z-index: 10; flex-wrap: wrap; justify-content: center; }
+        .footer-link { display: inline-block; transition: transform 0.3s ease; }
+        .footer-logo { height: 100px; width: 100px; border-radius: 50%; object-fit: cover; border: 3px solid transparent; transition: all 0.3s ease; background-color: rgba(0,0,0,0.3); }
+
+        .logo-moonlab { border-color: #0066ff; filter: drop-shadow(0 0 8px rgba(0, 102, 255, 0.6)); }
+        .logo-anime { border-color: #ff3366; filter: drop-shadow(0 0 8px rgba(255, 51, 102, 0.6)); }
+        .logo-perfume { border-color: #e0e0e0; filter: drop-shadow(0 0 8px rgba(224, 224, 224, 0.6)); }
+
+        .footer-link:hover { transform: scale(1.15); }
+        .footer-link:hover .footer-logo { border-color: #fff; }
+        .footer-link:hover .logo-moonlab { filter: drop-shadow(0 0 25px rgba(0, 102, 255, 0.9)); }
+        .footer-link:hover .logo-anime { filter: drop-shadow(0 0 25px rgba(255, 51, 102, 0.9)); }
+        .footer-link:hover .logo-perfume { filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.9)); }
+
+        /* ========================================================================== */
+        /* === MODO RESPONSIVE (MÓVIL) === */
+        /* ========================================================================== */
+        @media screen and (max-width: 900px) {
+            .banner-wrapper { margin-bottom: 25px; }
+            .tabs-menu { gap: 20px; margin-bottom: 20px;}
+            .container { width: 95%; padding: 0; background: transparent; box-shadow: none; border: none; backdrop-filter: none; }
+            
+            table, thead, tbody, th, td, tr { display: block; }
+            
+            /* Ocultar el encabezado en móvil */
+            thead { display: none; } 
+
+            tr { 
+                margin-bottom: 25px; 
+                background-color: rgba(30, 30, 30, 0.85);
+                border: 1px solid rgba(0, 255, 255, 0.2);
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                height: auto; 
+                padding: 15px;
+                position: relative;
+                overflow: hidden; 
+            }
+            tr:hover { transform: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+            /* Ajuste específico para los banners en móvil */
+            .rank-1-banner {
+               background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5)), url('/static/sylas.webp') !important;
+               background-position: center !important; border: 2px solid #ffce44 !important;
+            }
+            .rank-2-banner {
+               background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5)), url('/static/ahri.webp') !important;
+               background-position: center !important; border: 2px solid #8a2be2 !important;
+            }
+            .rank-3-banner {
+               background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5)), url('/static/mf.webp') !important;
+               background-position: center !important; border: 2px solid #ff4500 !important;
+            }
+            .rank-4-banner {
+               background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5)), url('/static/ahri_coven.webp') !important;
+               background-position: center !important; border: 2px solid #e91e63 !important;
+            }
+            .rank-5-banner {
+               background-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5)), url('/static/anime_girl.webp') !important;
+               background-position: center !important; border: 2px solid #ff69b4 !important;
+            }
+
+            td { 
+                border: none; position: relative; padding: 5px 0;
+                height: auto; text-align: center !important;
+                display: flex; justify-content: center; align-items: center;
+            }
+
+            td:nth-of-type(1) { font-size: 2em !important; color: #00ffff !important; margin-bottom: 10px; font-weight: 900; }
+            .col-invocador { width: 100%; padding: 0; }
+            .player-info { flex-direction: column; gap: 10px; }
+            .player-name { font-size: 1.5em; }
+
+            .col-rank-icon { width: 100%; height: 140px; margin: 10px 0; }
+            .rank-img { width: 180px; opacity: 0.2; }
+
+            .col-rank-text { width: 100%; padding: 0; margin-bottom: 20px; }
+            .rank-text-group { align-items: center; }
+            .tier-label { font-size: 2em; }
+
+            .col-centered { display: inline-block; width: 30%; font-size: 1em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+            td:nth-of-type(5)::before { content: "LP"; display: block; font-size: 0.7em; color: #888; margin-bottom: 5px;}
+            td:nth-of-type(6)::before { content: "Winrate"; display: block; font-size: 0.7em; color: #888; margin-bottom: 5px;}
+            td:nth-of-type(7)::before { content: "Games"; display: block; font-size: 0.7em; color: #888; margin-bottom: 5px;}
+
+            .sponsors-title { margin-top: 40px; font-size: 1.2em; }
+            .footer-container { gap: 20px; }
+            .footer-logo { height: 75px; width: 75px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-wrapper">
+        <img src="/static/banner.jpg" alt="Ranking Goutudeboom" class="main-banner-img">
+    </div>
+    
+    <div class="tabs-menu">
+        <button class="tab-btn active" onclick="openTab('ranking', this)">Ranking</button>
+        <button class="tab-btn" onclick="openTab('chala', this)">Chala</button>
+    </div>
+
+    <div id="ranking" class="tab-content active">
+        <div class="container">
+            <div id="loading" class="loading">Contactando a Riot Games...</div>
+            <table id="leaderboardTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th class="col-invocador">Invocador</th>
+                        <th class="col-centered" style="width: 120px;">Elo</th> 
+                        <th style="width: 180px;"></th> 
+                        <th>LP</th>
+                        <th>Winrate</th>
+                        <th>Partidas</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="chala" class="tab-content">
+        <div class="container">
+            <div class="chala-placeholder">
+                <h2 class="chala-title">Salón de la CHALA Máxima</h2>
+                <p>En este lugar sagrado —y a la vez vergonzoso— queda grabado para la eternidad el nombre del invocador que alcanzó la gloria… pero la gloria del fracaso. Aquí descansa la esencia del jugador que no supo farmear, que no ganó ni con draft rojo, que perdió hasta con el jungla enemigo afk, y que convirtió cada partida en un poema trágico digno de bronce V. En este muro se honra a aquel que, semana tras semana, demostró un talento único: hacer lo incorrecto, en el momento incorrecto, de la manera más incorrecta posible. Su título es eterno. Su humillación, legendaria. Su nombre… imborrable. Cuando los demás miren esta sección, recordarán que alguien tuvo que caer para que los demás pudieran reír, flamear en paz y dormir tranquilos ganando LP. Que este retrato sirva como advertencia: que nunca más nazca un invocador tan chala, tan zico, tan maestro del desastre. Bienvenido al lugar del que nadie quiere formar parte. El pedestal del último. El trono del deshonor. El hogar del CHALA MÁXIMA.</p>
+                <br>
+                <a href="https://youtu.be/S280Pqq3T_w" target="_blank" class="footer-link">
+                    <img src="/static/608722.jpg" alt="Zico Chala" class="chala-img">
+                </a>
+                
+            </div>
+        </div>
+    </div>
+
+    <h2 class="sponsors-title">SPONSORS</h2>
+
+    <div class="footer-container">
+        <a href="https://www.instagram.com/moonlabpc/?hl=es" target="_blank" class="footer-link">
+            <img src="/static/418358232_717014733731643_8872179237889197949_n.jpg" alt="Moonlab Logo" class="footer-logo logo-moonlab">
+        </a>
+        <a href="https://www.instagram.com/tokyotech.cl/?hl=es" target="_blank" class="footer-link">
+            <img src="/static/414488184_220836390996909_7084233022181049305_n.jpg" alt="Logo Anime" class="footer-logo logo-anime">
+        </a>
+        <a href="https://www.tiktok.com/@bersek___/video/7355955948982193414?is_from_webapp=1&sender_device=pc" target="_blank" class="footer-link">
+            <img src="/static/582529170_17893687893361170_8088551268556585610_n.jpg" alt="Logo Nuevo" class="footer-logo logo-perfume">
+        </a>
+    </div>
+
+    <script>
+        const DDRAGON_VER = "14.23.1"; 
+
+        function openTab(tabName, btnElement) {
+            var contents = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+            var buttons = document.getElementsByClassName("tab-btn");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            btnElement.classList.add("active");
+        }
+
+        async function updateLeaderboard() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('leaderboardTable').style.display = 'table';
+
+                data.forEach(player => {
+                    const tr = document.createElement('tr');
+                    
+                    // --- LÓGICA PARA BANNERS ESPECIALES ---
+                    if (player.pos === 1) {
+                        tr.classList.add('rank-1-banner');
+                    } else if (player.pos === 2) {
+                        tr.classList.add('rank-2-banner');
+                    } else if (player.pos === 3) {
+                        tr.classList.add('rank-3-banner');
+                    } else if (player.pos === 4) {
+                        tr.classList.add('rank-4-banner');
+                    } else if (player.pos === 5) {
+                        tr.classList.add('rank-5-banner');
+                    }
+                    // --------------------------------------
+
+                    let tierColorClass = '';
+                    if (player.tier === 'CHALLENGER') tierColorClass = 'tier-challenger';
+                    else if (player.tier === 'GRANDMASTER') tierColorClass = 'tier-grandmaster';
+                    else if (player.tier === 'MASTER') tierColorClass = 'tier-master';
+                    else if (player.tier === 'DIAMOND') tierColorClass = 'tier-diamond';
+                    else if (player.tier === 'EMERALD') tierColorClass = 'tier-emerald';
+                    else if (player.tier === 'PLATINUM') tierColorClass = 'tier-platinum';
+                    else if (player.tier === 'GOLD') tierColorClass = 'tier-gold';
+                    else if (player.tier === 'SILVER') tierColorClass = 'tier-silver';
+                    else if (player.tier === 'BRONZE') tierColorClass = 'tier-bronze';
+                    else if (player.tier === 'IRON') tierColorClass = 'tier-iron';
+
+                    let wrClass = player.winrate >= 50 ? 'high' : 'low';
+                    
+                    const iconUrl = player.icon_id 
+                        ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VER}/img/profileicon/${player.icon_id}.png`
+                        : 'https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/29.png'; 
+                    
+                    // CONSTRUCCIÓN DEL ENLACE DE WINRATE
+                    // Usamos el nombre y tag del jugador para construir la URL de un sitio externo (ejemplo: Op.gg)
+                    const winrateUrl = `https://op.gg/es/lol/summoners/las/${player.name}-${player.tag}/`;
+
+                    tr.innerHTML = `
+                        <td class="col-centered" style="color: #666; font-weight: bold; font-size: 1.5em;">${player.pos}</td>
+                        <td class="col-invocador">
+                            <div class="player-info">
+                                <img src="${iconUrl}" class="player-icon" alt="icon">
+                                <div class="player-name-box">
+                                    <span class="player-name">${player.name}</span>
+                                    <span class="tag-line">#${player.tag}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="col-rank-icon">
+                            <img src="/static/rangos/${player.tier_image}" class="rank-img" alt="${player.tier}">
+                        </td>
+                        <td class="col-rank-text">
+                            <div class="rank-text-group">
+                                <span class="tier-label ${tierColorClass}">${player.tier}</span>
+                                <span class="division-label">${player.rank}</span>
+                            </div>
+                        </td>
+                        <td class="col-centered lp-count">${player.lp} LP</td>
+                        <td class="col-centered">
+                            <a href="${winrateUrl}" target="_blank" class="winrate-link">
+                                <span class="winrate ${wrClass}">${player.winrate}%</span>
+                            </a>
+                        </td>
+                        <td class="col-centered" style="color: #aaa; font-size: 1em;">${player.wins}W - ${player.losses}L</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) { console.error("Error actualizando:", error); }
+        }
+        updateLeaderboard();
+        setInterval(updateLeaderboard, 60000);
+    </script>
+</body>
+</html>

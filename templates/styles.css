@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Ranking Goutudeboom</title>
+    <style> 
+/* --- ESTILOS ESPECÍFICOS PARA RANGOS --- */
+
+/* El contenedor que agrupa imagen y texto */
+.rank-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Espacio entre imagen y texto */
+    padding: 5px;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+}
+
+/* Efecto suave al pasar el mouse por encima de toda la celda */
+.rank-container:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* La Imagen del Rango */
+.rank-icon {
+    width: 85px;  /* ANCHO: Cambia esto para agrandar/achicar */
+    height: 85px; /* ALTO */
+    object-fit: contain;
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); /* Sombra negra suave */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Rebote suave */
+}
+
+/* Animación: Cuando pasas el mouse, la imagen crece y flota */
+.rank-container:hover .rank-icon {
+    transform: scale(1.2) translateY(-5px); /* Crece 20% y sube un poco */
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4)); /* Resplandor dorado */
+}
+
+/* Textos del rango */
+.rank-text-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.rank-title {
+    font-size: 1.3em;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.rank-subtitle {
+    font-size: 1em;
+    color: #999;
+    font-weight: 400;
+    margin-top: 3px;
+}
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 20px;
+        }
+        h1 { text-align: center; color: #ffce44; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
+        .container {
+            max-width: 1000px; margin: 0 auto; background-color: #1e1e1e;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.6); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { 
+    padding: 10px 15px; /* Reducimos el padding vertical porque la imagen ya es muy alta */
+    text-align: center; 
+    border-bottom: 1px solid #333; 
+    vertical-align: middle;
+    height: 110px; /* Forzamos una altura mínima de fila */
+}
+        th { background-color: #252525; color: #888; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px;}
+        tr:hover { background-color: #2a2a2a; transition: background-color 0.2s; }
+
+        /* ESTILOS NUEVOS PARA EL ICONO Y NOMBRE */
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Espacio entre icono y nombre */
+            text-align: left;
+        }
+        .player-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%; /* Icono redondo */
+            border: 2px solid #ffce44;
+            object-fit: cover;
+        }
+        .player-name-box { display: flex; flex-direction: column; }
+        .player-name { color: white; font-weight: bold; font-size: 1.1em; }
+        .tag-line { color: #666; font-size: 0.8em; font-weight: normal;}
+
+        .rank-tier { font-weight: bold; }
+        .tier-challenger { color: #f4c430; text-shadow: 0 0 10px rgba(244, 196, 48, 0.4); }
+        .tier-grandmaster { color: #ff5858; }
+        .tier-master { color: #d0a6ff; }
+        .tier-diamond { color: #576bce; }
+        .tier-emerald { color: #2ecc71; }
+
+        .lp-count { color: #fff; font-weight: bold; }
+        .winrate { font-size: 0.9em; font-weight: bold;}
+        .winrate.high { color: #2ecc71; }
+        .winrate.low { color: #e84118; }
+        .loading { text-align: center; padding: 30px; color: #888; font-style: italic;}
+    </style>
+</head>
+<body>
+    <h1>Ranking Goutudeboom</h1>
+    <div class="container">
+        <div id="loading" class="loading">Contactando a Riot Games...</div>
+        <table id="leaderboardTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th style="text-align: left;">Invocador</th>
+                    <th>Elo</th>
+                    <th>LP</th>
+                    <th>Winrate</th>
+                    <th>Partidas</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Usamos una versión reciente fija de LoL para buscar las imágenes de perfil
+        const DDRAGON_VER = "14.23.1"; 
+
+        async function updateLeaderboard() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('leaderboardTable').style.display = 'table';
+
+                data.forEach(player => {
+                    const tr = document.createElement('tr');
+
+                    let tierClass = '';
+                    if (player.tier === 'CHALLENGER') tierClass = 'tier-challenger';
+                    else if (player.tier === 'GRANDMASTER') tierClass = 'tier-grandmaster';
+                    else if (player.tier === 'MASTER') tierClass = 'tier-master';
+                    else if (player.tier === 'DIAMOND') tierClass = 'tier-diamond';
+                    else if (player.tier === 'EMERALD') tierClass = 'tier-emerald';
+
+                    let wrClass = player.winrate >= 50 ? 'high' : 'low';
+
+                    // URL de la imagen del icono de perfil
+                    const iconUrl = player.icon_id 
+                        ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VER}/img/profileicon/${player.icon_id}.png`
+                        : 'https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/29.png'; // Icono default
+
+                    tr.innerHTML = `
+                        <td style="color: #666; font-weight: bold; font-size: 1.2em;">${player.pos}</td>
+                        <td>
+                            <div class="player-info">
+                                <img src="${iconUrl}" class="player-icon" alt="icon">
+                                <div class="player-name-box">
+                                    <span class="player-name">${player.name}</span>
+                                    <span class="tag-line">#${player.tag}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                       <td class="rank-tier ${tierClass}">
+                             <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                                <img src="/static/rangos/${player.tier_image}" 
+                                     style="width: 95px; height: 95px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));" 
+                                     alt="${player.tier}">
+
+                                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                    <span style="font-size: 1.4em; line-height: 1;">${player.tier}</span>
+                                    <span style="font-size: 1.1em; color: #888; font-weight: normal;">${player.rank}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="lp-count">${player.lp} LP</td>
+                        <td class="winrate ${wrClass}">${player.winrate}%</td>
+                        <td style="color: #aaa; font-size: 0.9em;">${player.wins}W - ${player.losses}L</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) { console.error("Error actualizando:", error); }
+        }
+        updateLeaderboard();
+        setInterval(updateLeaderboard, 60000);
+    </script>
+</body>
+</html>
