@@ -6,7 +6,10 @@ app = Flask(__name__)
 
 # --- CONFIGURACIÓN ---
 # RECUERDA: ¡Esta clave cambiará mañana! Si falla con error 403, pon la nueva aquí.
-RIOT_API_KEY = "RGAPI-81a2dab0-766a-4981-b71b-6abcc04d8af2".strip()
+import os
+# ...
+# Busca la clave en las variables de entorno, si no está, usa una vacía o lanza error
+RIOT_API_KEY = os.environ.get("RIOT_API_KEY")
 
 REGION_ACCOUNT = "americas"
 REGION_LEAGUE = "la2"
