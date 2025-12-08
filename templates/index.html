@@ -43,8 +43,8 @@
         }
 
         .main-banner-img {
-            width: 100%;    
-            height: auto;   
+            width: 100%;  
+            height: auto; 
             display: block; 
             object-fit: cover; 
         }
@@ -120,7 +120,7 @@
         /* -------------------------------------------------- */
 
         th { 
-            /* background-color: rgba(37, 37, 37, 0.9);  <-- ELIMINADO */
+            /* background-color: rgba(37, 37, 37, 0.9); <-- ELIMINADO */
             background-color: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente para que se vea la imagen */
             color: #fff; /* Texto blanco para mejor contraste */
             text-shadow: 0 2px 4px rgba(0,0,0,1); /* Sombra para que el texto resalte */
@@ -379,6 +379,26 @@
     <script>
         const DDRAGON_VER = "14.23.1"; 
 
+        // ==========================================================
+        // === CONFIGURACIÓN DE URLS PERSONALIZADAS (CUSTOM_URLS) ===
+        // ==========================================================
+        /**
+         * OBJETO CLAVE: VALOR.
+         * La CLAVE debe ser el "NombreDeInvocador#Tag" (ej: "Goutudeboom#LAS").
+         * El VALOR es la URL personalizada que se le asignará.
+         * * Si un invocador no está en esta lista, se usará su perfil de Op.gg por defecto.
+         */
+        const CUSTOM_URLS = {
+            "Wower#111": "https://youtu.be/nN_dtgv9EGQ", 
+            "Oguri Flan#emiya": "https://youtu.be/eMtVQNgOL5c",
+            "Hide on bush#422": "https://youtu.be/fCmntTO0pEk",
+            "CieloPayaso#gtdbm": "https://youtu.be/3OdIya7asyg?list=RD3OdIya7asyg&t=19",
+            "GumaYoshii#ranca": "https://youtu.be/5InG_UKv7wo",
+            // ¡Añade o modifica más invocadores y sus URLs personalizadas aquí!
+        };
+        // ==========================================================
+
+
         function openTab(tabName, btnElement) {
             var contents = document.getElementsByClassName("tab-content");
             for (var i = 0; i < contents.length; i++) {
@@ -394,6 +414,8 @@
 
         async function updateLeaderboard() {
             try {
+                // Asumiendo que /api/data devuelve una lista de objetos como:
+                // [{ name: "Goutudeboom", tag: "LAS", ... }, ...]
                 const response = await fetch('/api/data');
                 const data = await response.json();
                 
@@ -405,7 +427,7 @@
                 data.forEach(player => {
                     const tr = document.createElement('tr');
                     
-                    // --- LÓGICA PARA BANNERS ESPECIALES ---
+                    // --- LÓGICA PARA BANNERS ESPECIALES (Top 1-5) ---
                     if (player.pos === 1) {
                         tr.classList.add('rank-1-banner');
                     } else if (player.pos === 2) {
@@ -417,7 +439,7 @@
                     } else if (player.pos === 5) {
                         tr.classList.add('rank-5-banner');
                     }
-                    // --------------------------------------
+                    // -------------------------------------------------
 
                     let tierColorClass = '';
                     if (player.tier === 'CHALLENGER') tierColorClass = 'tier-challenger';
@@ -437,10 +459,16 @@
                         ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VER}/img/profileicon/${player.icon_id}.png`
                         : 'https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/29.png'; 
                     
-                    // CONSTRUCCIÓN DEL ENLACE DE PERFIL (Op.gg para LAS)
+                    // PASO CLAVE: Se construye la clave para buscar la URL personalizada
+                    const summonerKey = `${player.name}#${player.tag}`;
+
+                    // URL por defecto (Op.gg)
                     const profileUrl = `https://op.gg/es/lol/summoners/las/${player.name}-${player.tag}/`;
                     
-                    // El enlace de Winrate ya usa la misma URL. Lo mantendremos igual.
+                    // Asigna la URL final: personalizada si existe en CUSTOM_URLS, sino usa la URL de Op.gg.
+                    const finalPlayerUrl = CUSTOM_URLS[summonerKey] || profileUrl;
+                    
+                    // El enlace de Winrate sigue usando el perfil de Op.gg por consistencia.
                     const winrateUrl = profileUrl; 
 
                     tr.innerHTML = `
@@ -449,7 +477,7 @@
                             <div class="player-info">
                                 <img src="${iconUrl}" class="player-icon" alt="icon">
                                 <div class="player-name-box">
-                                    <a href="https://www.youtube.com/watch?v=Sr7ZUlsTwKc${profileUrl}" target="_blank" class="player-name-link">
+                                    <a href="${finalPlayerUrl}" target="_blank" class="player-name-link">
                                         ${player.name}
                                     </a>
                                     <span class="tag-line">#${player.tag}</span>
