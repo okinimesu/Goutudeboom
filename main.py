@@ -3,13 +3,12 @@ import requests
 import urllib.parse
 
 app = Flask(__name__)
-
 # --- CONFIGURACIÓN ---
 # RECUERDA: ¡Esta clave cambiará mañana! Si falla con error 403, pon la nueva aquí.
 import os
 # ...
 # Busca la clave en las variables de entorno, si no está, usa una vacía o lanza error
-RIOT_API_KEY = os.environ.get("RIOT_API_KEY")
+RIOT_API_KEY = ("RGAPI-017490d3-dcd2-4285-b00f-b5ae93bfde65")
 
 REGION_ACCOUNT = "americas"
 REGION_LEAGUE = "la2"
